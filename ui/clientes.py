@@ -2,17 +2,15 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from base_datos import bd
 from ui.comun import campo, mostrar_error_db, gestionar_botones
-
+from ui.estilos import VentanaModal
 
 class VentanaCliente:
     def __init__(self, parent, usuario):
-        self.w = tk.Toplevel(parent)
-        self.w.title('Clientes')
-        self.w.geometry('540x380')
+        self.w = VentanaModal(parent, 'Clientes', 625, 400)
         self.usuario = usuario
 
         self.vars = {k: tk.StringVar() for k in (
-            'cliente_id', 'rfc', 'nombre', 'telefono')}
+            'cliente_id', 'rfc', 'nombre', 'telefono', 'email')}
         self.original = None
         self.modo = 'inicial'
         self.entradas = {}
@@ -30,12 +28,13 @@ class VentanaCliente:
         self.entradas['rfc'] = campo(form, 'RFC', self.vars['rfc'], 0)
         self.entradas['nombre'] = campo(form, 'Nombre', self.vars['nombre'], 1)
         self.entradas['telefono'] = campo(form, 'Teléfono', self.vars['telefono'], 2)
+        self.entradas['email'] = campo(form, 'Email', self.vars['email'], 3)
 
         # Usuario (solo lectura - es el usuario logueado)
-        ttk.Label(form, text='Usuario').grid(row=3, column=0, padx=6, pady=5, sticky='w')
+        ttk.Label(form, text='Usuario').grid(row=4, column=0, padx=6, pady=5, sticky='w')
         ttk.Label(form,
                   text=f"{usuario['nombre']} (ID {usuario['usuario_id']})",
-                  foreground='#555555').grid(row=3, column=1, padx=6, pady=5, sticky='w')
+                  foreground='#555555').grid(row=4, column=1, padx=6, pady=5, sticky='w')
 
         # Botones
         barra = ttk.Frame(self.w, padding=10)
@@ -72,6 +71,7 @@ class VentanaCliente:
         self.vars['rfc'].set(fila.get('rfc') or '')
         self.vars['nombre'].set(fila.get('nombre') or '')
         self.vars['telefono'].set(fila.get('telefono') or '')
+        self.vars['email'].set(fila.get('email') or '')
         self.original = {k: v.get() for k, v in self.vars.items()}
         self.set_modo('encontrado')
 
@@ -84,22 +84,23 @@ class VentanaCliente:
         if not v['nombre']:
             return messagebox.showwarning('Atención', 'El nombre es obligatorio.', parent=self.w)
         try:
-            # El usuario SIEMPRE es el que inició sesión
             uid = self.usuario['usuario_id']
             if self.modo == 'editar':
                 bd.ejecutar(
-                    'UPDATE cliente SET rfc=%s, nombre=%s, telefono=%s, usuario_id=%s '
-                    'WHERE cliente_id=%s',
-                    (v['rfc'], v['nombre'], v['telefono'], uid, v['cliente_id']))
+                    'UPDATE cliente SET rfc=%s, nombre=%s, telefono=%s, email=%s, '
+                    'usuario_id=%s WHERE cliente_id=%s',
+                    (v['rfc'], v['nombre'], v['telefono'], v['email'],
+                     uid, v['cliente_id']))
             else:
                 if not v['cliente_id']:
                     return messagebox.showwarning('Atención',
                                                   'El ID del cliente es obligatorio.',
                                                   parent=self.w)
                 bd.ejecutar(
-                    'INSERT INTO cliente (cliente_id, rfc, nombre, telefono, usuario_id) '
-                    'VALUES (%s,%s,%s,%s,%s)',
-                    (v['cliente_id'], v['rfc'], v['nombre'], v['telefono'], uid))
+                    'INSERT INTO cliente (cliente_id, rfc, nombre, telefono, email, '
+                    'usuario_id) VALUES (%s,%s,%s,%s,%s,%s)',
+                    (v['cliente_id'], v['rfc'], v['nombre'], v['telefono'],
+                     v['email'], uid))
             messagebox.showinfo('Clientes', 'Guardado correctamente.', parent=self.w)
             self.set_modo('guardado')
         except Exception as exc:

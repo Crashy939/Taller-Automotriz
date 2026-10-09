@@ -1,12 +1,14 @@
 import tkinter as tk
 from ui.inicio_sesion import VentanaInicioSesion
 from ui.ventana_principal import VentanaPrincipal
+from ui.estilos import aplicar_tema
 
 
 class Aplicacion:
     def __init__(self):
         self.root = tk.Tk()
         self.root.withdraw()
+        aplicar_tema(self.root)
         self.mostrar_login()
 
     def mostrar_login(self):

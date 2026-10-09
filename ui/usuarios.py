@@ -12,7 +12,7 @@ class VentanaUsuario:
     def __init__(self, parent):
         self.w = tk.Toplevel(parent)
         self.w.title('Usuarios')
-        self.w.geometry('540x520')
+        self.w.geometry('540x470')
 
         self.vars = {k: tk.StringVar() for k in (
             'usuario_id', 'nombre', 'telefono', 'email',

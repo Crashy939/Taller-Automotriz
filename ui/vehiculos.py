@@ -2,13 +2,11 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from base_datos import bd
 from ui.comun import campo, mostrar_error_db, gestionar_botones, SelectorRelacion
-
+from ui.estilos import VentanaModal
 
 class VentanaVehiculo:
     def __init__(self, parent):
-        self.w = tk.Toplevel(parent)
-        self.w.title('Vehículos')
-        self.w.geometry('600x460')
+        self.w = VentanaModal(parent, 'Vehículos', 625, 500)
 
         self.vars = {k: tk.StringVar() for k in (
             'matricula', 'marca', 'modelo', 'anio', 'cliente_id',

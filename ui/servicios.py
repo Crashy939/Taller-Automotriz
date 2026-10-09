@@ -3,13 +3,11 @@ from tkinter import ttk, messagebox
 from base_datos import bd
 from ui.comun import campo, fecha_valida, mostrar_error_db, gestionar_botones, SelectorRelacion
 from ui.piezas_servicio import VentanaPiezasServicio
-
+from ui.estilos import VentanaModal
 
 class VentanaServicio:
     def __init__(self, parent, usuario):
-        self.w = tk.Toplevel(parent)
-        self.w.title('Servicios')
-        self.w.geometry('720x600')
+        self.w = VentanaModal(parent, 'Servicios', 625, 650)
         self.usuario = usuario
 
         self.vars = {k: tk.StringVar() for k in (
