@@ -10,7 +10,7 @@ class VentanaPiezasServicio:
     def __init__(self, parent, folio):
         self.w = tk.Toplevel(parent)
         self.w.title(f'Piezas del servicio - Folio {folio}')
-        self.w.geometry('700x480')
+        self.w.geometry('700x580')
         self.folio = folio
         self.piezas = []
 
@@ -94,6 +94,20 @@ class VentanaPiezasServicio:
             return messagebox.showwarning('Atención',
                                           'Seleccione una pieza.', parent=self.w)
 
+        # ---- VALIDACIÓN: el folio debe existir en reparacion ----
+        try:
+            existe_folio = bd.obtener_uno(
+                'SELECT folio FROM reparacion WHERE folio=%s', (self.folio,))
+        except Exception as exc:
+            return mostrar_error_db(exc, self.w)
+        if not existe_folio:
+            return messagebox.showwarning(
+                'Atención',
+                f'El folio {self.folio} todavía no está guardado.\n'
+                'Primero guarda el servicio antes de agregar piezas.',
+                parent=self.w)
+        # --------------------------------------------------------
+
         pieza_id = sel.split(' - ')[0]
 
         try:
@@ -122,19 +136,30 @@ class VentanaPiezasServicio:
                 'SELECT cantidad FROM detalle_reparacion_pieza '
                 'WHERE folio=%s AND pieza_id=%s',
                 (self.folio, pieza_id))
+
+            sentencias = []
             if existe:
-                bd.ejecutar(
+                sentencias.append((
                     'UPDATE detalle_reparacion_pieza '
                     'SET cantidad = cantidad + %s '
                     'WHERE folio=%s AND pieza_id=%s',
-                    (cantidad, self.folio, pieza_id))
+                    (cantidad, self.folio, pieza_id)))
             else:
-                bd.ejecutar(
+                sentencias.append((
                     'INSERT INTO detalle_reparacion_pieza '
                     '(folio, pieza_id, cantidad) VALUES (%s, %s, %s)',
-                    (self.folio, pieza_id, cantidad))
+                    (self.folio, pieza_id, cantidad)))
+
+            # Descontar stock de la pieza
+            sentencias.append((
+                'UPDATE pieza SET stock = stock - %s WHERE pieza_id=%s',
+                (cantidad, pieza_id)))
+
+            bd.transaccion(sentencias)
+
             self.var_cantidad.set('1')
             self.cmb_pieza.set('')
+            self.cargar_disponibles()   # refresca stock en el combo
             self.cargar_usadas()
         except Exception as exc:
             mostrar_error_db(exc, self.w)
@@ -147,15 +172,21 @@ class VentanaPiezasServicio:
                                           parent=self.w)
         vals = self.tree.item(sel[0], 'values')
         pieza_id = vals[0]
+        cantidad = int(vals[3])
+
         if not messagebox.askyesno('Confirmar',
                                    '¿Quitar esta pieza del servicio?',
                                    parent=self.w):
             return
         try:
-            bd.ejecutar(
-                'DELETE FROM detalle_reparacion_pieza '
-                'WHERE folio=%s AND pieza_id=%s',
-                (self.folio, pieza_id))
+            bd.transaccion([
+                ('DELETE FROM detalle_reparacion_pieza '
+                 'WHERE folio=%s AND pieza_id=%s',
+                 (self.folio, pieza_id)),
+                ('UPDATE pieza SET stock = stock + %s WHERE pieza_id=%s',
+                 (cantidad, pieza_id)),
+            ])
+            self.cargar_disponibles()
             self.cargar_usadas()
         except Exception as exc:
             mostrar_error_db(exc, self.w)

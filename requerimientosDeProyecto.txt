@@ -1,0 +1,78 @@
+Se necesita un programa en Python de control de taller automotriz con la librería TKinter con las siguientes características:
+1. Va a haber un login cuando se abra el programa, solamente puede ingresar los usuarios que esten registrados en la tabla de usuarios (se usará MySQL), la contraseña
+ debe estar hasheada para que no se pueda consultar la contraseña desde la base de datos y el botón de Login, existira un usuario que solamente tendrá los permisos del 2 al 6,
+ otro usuario tendrá los permisos del inciso 2 al 8. 
+2. Al entrar, va a haber un botón que dice Options, al darle clic, va a desplegar otros botones en este orden: Exit, Customers, Vehicles, Services, Reportes (si tiene permiso
+ el usuario).
+3. Si se le da al botón de Exit, pregunta que si está seguro de salir, en caso de que diga que si, se sale a la ventana de login, si dice que no, continua el programa normal.
+4. Si se le da al botón de Customers, va a aparecer una ventana con la siguiente información:
+  4.1: Pedirá el ID del cliente, (Enter customer's ID:), un entry donde puedes colocar solo números, al lado del ID, aparecera un botón de buscar
+  4.2: El botón de buscar si se le da clic dependera de como este la tabla: si existe el ID en la tabla clientes en la base de datos, va a consultar la información y la va
+  a mostrar en cada uno de los siguientes input's, en caso de que no exista, mostrará el mensaje de que el cliente no existe, y que verifique el ID.
+  4.3: Debajo del entry dónde pide el ID del cliente, habrá un cuadro de texto con el ID del cliente.
+  4.4: Debajo del entry con el ID del cliente, aparecera el nombre del usuario y al lado del nombre aparecerá el ID del usuario, debajo del nombre del usuario,
+  aparecerá un cuadro de texto con el teléfono del cliente.
+  4.5: Debajo de todos los entrys, apareceran 4 botones, Nuevo, Guardar, Cancelar y Editar, si cuando se busca el ID se encuentra el cliente,
+  el botón Nuevo está deshabilitado, si no lo encuentra, está habilitado, en guardar funciona siempre, en cancelar funciona si se edita el cliente, sirve para revertir los cambios,
+  si se trata de registrar y se le da en cancelar, se borra toda la información, el botón de Editar funciona solamente cuando ya se pudo consultar al cliente.
+5. Si se le da al botón de Vehicles, va a aparecer una venta con la información:
+  5.1: Texto que diga Ingrese matrícula a buscar, un entry, y el botón de buscar al lado
+  5.2: Abajo un texto que dice Matrícula y consulte la matricula consultada
+  5.3: Abajo un texto que dice nombre del cliente y una lista desplegable con los clientes disponibles
+  5.4: Abajo un texto que diga la marca del auto, y al lado uno que diga el modelo.
+  5.5: Abajo un texto que diga el color, y al lado uno que diga el kilometraje.
+  5.6: Abajo van a aparecer los mismos cuatro botones de Nuevo, Guardar, Cancelar y Editar, que tendrán la misma funcionalidad que la de clientes, pero adaptado a la ventana de vehiculos
+6. Si se le da al botón de servicios, aparecerá una nueva ventana que mostrará:
+  6.1: Mostrará un entry que pida el folio del servicio, lo consulta desde la base de datos si existe con un botón al lado del entry que dice buscar,, si no, espera a que se agregue toda la información
+  6.2: Abajo apareceran textos y entrys con el siguiente orden de filas y columnas (1,1), (2, 1), (3,1), (4, 1), (1, 2), (2, 2), (3, 2), (4, 2)
+  Hora de entrada, Hora de salida, Fecha de entrada, Tipo de servicio, Fecha de salida, Matrícula, usuario Id, Total a pagar, obviamente no permite registrar el servicio si la
+  información es incoherente (por ejemplo que la fecha de entrada sea mayor que a la de salida).
+  6.3: Estarán los botones de Nuevo, Editar, Guardar, Eliminar y Cancelar
+7. Al entrar al apartado de reportes, aparecera una ventana con un entry que pida el id del usuario, al lado aparecera un botón de buscar, si existe el cliente, consultará todos
+   los servicios que se le ha hecho a ese cliente en una tabla que aparecera debajo del entry
+  7.1:  Debajo aparecera otro entry que pedira formato de fecha (yyyy-mm-dd), y al darle en buscar, buscará todos los servicios que se le ha hecho a todos los clientes
+  desde esa fecha en adelante en una tabla
+8. Al entrar al apartado de piezas, puedes encontrar los datos disponibles para dar de alta, editar, borrar o cancelar piezas de auto, te puedes basar en la tabla de piezas.
+Te comparto los campos de base de datos:
+tabla usuario:
+perfil
+usuario_id (primary key)
+password (hasheada)
+nombre
+nombre_usuario
+
+tabla cliente:
+rfc
+cliente_id (primary key)
+usuario_id (foreign key)
+nombre
+telefono
+
+Tabla vehiculo:
+matricula (primary key)
+marca
+modelo
+anio (se refiere al año del vehículo)
+cliente_id (foreign key)
+
+Tabla reparacion:
+usuario_id (foreign key)
+matricula (foreign key)
+fecha_entrada
+fecha_salida
+folio (primary key)
+falla (fallo que tiene el vehículo)
+hora_entrada
+hora_salida
+
+Tabla piezas
+pieza_id (primary key)
+descripcion
+marca
+stock
+
+Tabla detalle_reparacion_pieza
+folio_det (primary key)
+cantidad
+pieza_id (foreign key)
+folio_rep (foreign key)

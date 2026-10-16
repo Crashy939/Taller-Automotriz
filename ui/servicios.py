@@ -135,8 +135,29 @@ class VentanaServicio:
             return messagebox.showwarning('Atención',
                                           'La fecha de salida no puede ser anterior a la entrada.',
                                           parent=self.w)
+
+        # ---- VALIDACIÓN: el servicio debe tener al menos una pieza ----
         try:
-            # Usuario SIEMPRE es el logueado
+            tiene_piezas = bd.obtener_uno(
+                'SELECT COUNT(*) AS total FROM detalle_reparacion_pieza '
+                'WHERE folio=%s', (v['folio'],))
+        except Exception as exc:
+            return mostrar_error_db(exc, self.w)
+
+        total_piezas = tiene_piezas['total'] if tiene_piezas else 0
+
+        if total_piezas == 0:
+            # Advertir pero permitir guardar (Opción B)
+            if not messagebox.askyesno(
+                    'Sin piezas asociadas',
+                    'Este servicio no tiene piezas asociadas.\n\n'
+                    '¿Deseas guardarlo de todas formas?\n\n'
+                    '(Puedes agregar piezas después usando el botón "Piezas a usar".)',
+                    parent=self.w):
+                return  # El usuario dijo "No", cancelamos el guardado
+        # --------------------------------------------------------------
+
+        try:
             uid = self.usuario['usuario_id']
             if self.modo == 'editar':
                 bd.ejecutar(
@@ -174,15 +195,26 @@ class VentanaServicio:
         if not folio:
             return
         if not messagebox.askyesno(
-                'Confirmar',
-                '¿Eliminar este servicio? También se eliminarán sus piezas asociadas.',
-                parent=self.w):
+            'Confirmar',
+            '¿Eiminar este servicio?\n\n'
+            'Las piezas asociadas se devolverán al stock',
+            parent = self.w):
             return
         try:
-            # Borrar primero los detalles (por si no hay ON DELETE CASCADE)
-            bd.ejecutar('DELETE FROM detalle_reparacion_pieza WHERE folio=%s', (folio,))
-            bd.ejecutar('DELETE FROM reparacion WHERE folio=%s', (folio,))
-            messagebox.showinfo('Servicios', 'Servicio eliminado.', parent=self.w)
+            # 1) Obtener las piezas asociadas al folio
+            piezas = bd.obtener_todos(
+                'SELECT pieza_id, cantidad FROM detalle_reparacion_pieza'
+                'WHERE folio = %s', (folio,))
+
+            # 2) Preparar la transacción: devolver stock + borrar detalles + borrar servicio
+            sentencias = []
+            sentencias.append((
+                'DELETE FROM detalle_reparacion_pieza WHERE folio = %s',
+                (folio,)))
+            bd.transaccion(sentencias)
+            messagebox.showinfo('Servicios',
+                                'Servicio eliminado y piezas devueltas al stock',
+                                parent=self.w)
             self.limpiar()
             self.set_modo('inicial')
         except Exception as exc:
